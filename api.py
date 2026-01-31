@@ -13,7 +13,6 @@ from utils.weather import get_weather
 from utils.fertilizer import recommend_fertilizer
 
 app = FastAPI(title="AgroScan API")
-
 API_KEY = "agroscan123"
 
 
