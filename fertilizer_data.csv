@@ -1,0 +1,33 @@
+crop,N_min,N_max,P_min,P_max,K_min,K_max,ph_min,ph_max,common_fertilizers,common_pesticides
+Tomato,100,150,50,80,50,100,5.5,7.5,Urea;DAP;MOP,Mancozeb;Chlorothalonil;Copper oxychloride
+Potato,120,180,60,100,100,150,5.0,6.5,Urea;DAP;MOP,Mancozeb;Metalaxyl;Chlorothalonil
+Rice,80,150,40,60,40,60,5.0,7.0,Urea;DAP;MOP,Carbendazim;Tricyclazole;Chlorpyrifos
+Maize,120,180,50,80,40,60,5.5,7.5,Urea;DAP;MOP,Atrazine;Lambda-cyhalothrin
+Corn,120,180,50,80,40,60,5.5,7.5,Urea;DAP;MOP,Atrazine;Lambda-cyhalothrin
+Wheat,100,150,40,60,40,60,6.0,7.5,Urea;DAP;MOP,Propiconazole;Imidacloprid
+Sugarcane,150,250,60,100,60,120,6.0,7.5,Urea;DAP;MOP,Chlorpyrifos;Carbendazim
+Soybean,20,40,60,90,40,60,6.0,7.0,DAP;SSP;MOP,Thiamethoxam;Carbendazim
+Strawberry,80,120,40,60,80,120,5.5,6.5,Urea;DAP;MOP,Captan;Copper fungicide
+Raspberry,50,80,30,50,60,100,5.5,6.5,Urea;DAP;MOP,Sulfur;Neem oil
+Blueberry,30,60,20,40,40,60,4.5,5.5,Ammonium sulfate;DAP,Sulfur;Copper fungicide
+Grape,60,100,40,60,60,100,5.5,7.0,Urea;DAP;MOP,Sulfur;Mancozeb
+Apple,50,100,25,50,50,100,5.5,7.0,Urea;DAP;MOP,Captan;Imidacloprid
+Cherry,60,100,30,50,60,100,6.0,7.0,Urea;DAP;MOP,Sulfur;Copper fungicide
+Peach,60,100,30,50,60,100,6.0,7.0,Urea;DAP;MOP,Captan;Chlorpyrifos
+Orange,100,200,40,80,80,150,5.5,7.5,Urea;DAP;MOP,Copper oxychloride;Imidacloprid
+BellPepper,100,150,50,80,80,120,5.5,7.0,Urea;DAP;MOP,Mancozeb;Spinosad
+Squash,80,120,40,60,60,100,6.0,7.5,Urea;DAP;MOP,Neem oil;Copper fungicide
+Coffee,80,120,60,80,80,120,5.0,6.5,Urea;DAP;MOP,Copper fungicide;Chlorpyrifos
+Tea,100,160,40,60,80,120,4.5,5.5,Urea;DAP;MOP,Copper fungicide;Sulfur
+Cotton,100,150,50,80,50,80,5.8,8.0,Urea;DAP;MOP,Imidacloprid;Spinosad
+Banana,150,250,50,80,200,300,5.5,7.5,Urea;DAP;MOP,Carbendazim;Chlorpyrifos
+Mango,75,150,25,50,75,150,5.5,7.5,Urea;DAP;MOP,Copper oxychloride;Imidacloprid
+Pomegranate,50,100,25,50,50,100,5.5,7.5,Urea;DAP;MOP,Sulfur;Copper fungicide
+Lentil,20,30,40,60,20,40,6.0,7.5,DAP;SSP,Carbendazim;Imidacloprid
+Chickpea,20,40,40,60,20,40,6.0,7.5,DAP;SSP,Carbendazim;Chlorpyrifos
+Blackgram,15,25,40,60,20,40,6.0,7.5,DAP;SSP,Thiamethoxam;Carbendazim
+Mungbean,15,25,40,60,20,40,6.0,7.5,DAP;SSP,Imidacloprid;Carbendazim
+Jute,40,80,20,40,20,40,5.0,7.5,Urea;DAP;MOP,Chlorpyrifos;Mancozeb
+Coconut,100,200,40,80,120,200,5.0,8.0,Urea;DAP;MOP,Imidacloprid;Copper fungicide
+Watermelon,80,120,40,60,80,120,5.5,7.0,Urea;DAP;MOP,Neem oil;Mancozeb
+Muskmelon,80,120,40,60,80,120,5.5,7.0,Urea;DAP;MOP,Neem oil;Mancozeb
