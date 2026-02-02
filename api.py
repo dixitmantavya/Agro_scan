@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 import cv2
 from PIL import Image
@@ -13,12 +14,26 @@ from utils.weather import get_weather
 from utils.fertilizer import recommend_fertilizer
 
 app = FastAPI(title="AgroScan API")
+
+# 🔑 Optional API key
 API_KEY = "agroscan123"
 
 
-# ---------- helpers ----------
+# ------------------ CORS (VERY IMPORTANT) ------------------
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all for now
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ------------------ helpers ------------------
 
 def check_api_key(x_api_key: str | None):
+    # optional check
     if x_api_key is None:
         return
     if x_api_key != API_KEY:
@@ -35,10 +50,11 @@ def parse_class_name(class_name: str):
 
 def compute_severity(img_bgr):
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-    lower_disease = np.array([5, 50, 50])
-    upper_disease = np.array([35, 255, 255])
 
-    mask = cv2.inRange(hsv, lower_disease, upper_disease)
+    lower = np.array([5, 50, 50])
+    upper = np.array([35, 255, 255])
+
+    mask = cv2.inRange(hsv, lower, upper)
     infected = np.count_nonzero(mask)
     total = mask.size
     pct = (infected / total) * 100 if total else 0
@@ -55,7 +71,7 @@ def compute_severity(img_bgr):
     return round(pct, 2), level
 
 
-# ---------- 1) main prediction ----------
+# ------------------ 1) prediction ------------------
 
 @app.post("/predict")
 async def predict(
@@ -65,6 +81,7 @@ async def predict(
     check_api_key(x_api_key)
 
     contents = await file.read()
+
     image = Image.open(io.BytesIO(contents)).convert("RGB")
     img_np = np.array(image)
     img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
@@ -85,7 +102,7 @@ async def predict(
     )
 
     _, buffer = cv2.imencode(".png", overlay)
-    gradcam_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
+    gradcam_base64 = base64.b64encode(buffer.tobytes()).decode()
 
     return {
         "class_name": best_class,
@@ -100,7 +117,7 @@ async def predict(
     }
 
 
-# ---------- 2) disease info ----------
+# ------------------ 2) disease info ------------------
 
 @app.get("/disease-info")
 def disease_info(name: str = Query(...)):
@@ -111,11 +128,10 @@ def disease_info(name: str = Query(...)):
     }
 
 
-# ---------- 3) weather ----------
+# ------------------ 3) weather ------------------
 
 @app.get("/weather")
 def weather(city: str = Query(...)):
-    # uses your existing weather util
     info = get_weather(city)
     return {
         "city": city,
@@ -123,27 +139,17 @@ def weather(city: str = Query(...)):
     }
 
 
-# ---------- 4) fertilizer recommendation ----------
+# ------------------ 4) fertilizer ------------------
 
 @app.post("/fertilizer/recommend")
 def fertilizer_recommend(data: dict):
-    """
-    expects JSON body:
-    {
-      "crop": "Tomato",
-      "soil_N": 40,
-      "soil_P": 20,
-      "soil_K": 30,
-      "soil_ph": 6.5
-    }
-    """
-    crop = data["crop"]
-    soil_N = data["soil_N"]
-    soil_P = data["soil_P"]
-    soil_K = data["soil_K"]
-    soil_ph = data["soil_ph"]
-
-    rec, pests = recommend_fertilizer(crop, soil_N, soil_P, soil_K, soil_ph)
+    rec, pests = recommend_fertilizer(
+        data["crop"],
+        data["soil_N"],
+        data["soil_P"],
+        data["soil_K"],
+        data["soil_ph"]
+    )
 
     return {
         "recommendation": rec,
@@ -151,16 +157,19 @@ def fertilizer_recommend(data: dict):
     }
 
 
-# ---------- 5) simple pesticide endpoint ----------
+# ------------------ 5) pesticide ------------------
 
 @app.post("/pesticide/recommend")
 def pesticide_recommend(data: dict):
-    """
-    expects JSON body:
-    { "class_name": "Tomato___Early_blight" }
-    """
     class_name = data["class_name"]
     return {
         "pesticide_advice": DISEASE_INFO.get(class_name),
         "detailed_guide": TOMATO_DISEASE_GUIDE.get(class_name)
     }
+
+
+# ------------------ root check ------------------
+
+@app.get("/")
+def home():
+    return {"message": "AgroScan API is running"}
