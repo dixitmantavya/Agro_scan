@@ -9,6 +9,10 @@ from utils.disease_info import DISEASE_INFO
 from utils.tomato_disease_guide import TOMATO_DISEASE_GUIDE
 from utils.weather import get_weather
 
+from utils.fertilizer import recommend_fertilizer
+from utils.fertilizer_amount import calculate_fertilizer_amount
+
+
 # ================= CONFIG =================
 
 st.set_page_config(
@@ -19,6 +23,7 @@ st.set_page_config(
 VIRAL_KEYWORDS = ["virus", "mosaic", "curl"]
 FUNGAL_KEYWORDS = ["blight", "rust", "mold", "spot"]
 BACTERIAL_KEYWORDS = ["bacterial"]
+
 
 # ================= LEAF EXTRACTION =================
 
@@ -40,13 +45,16 @@ def extract_leaf_mask(img_bgr):
         return img_bgr, mask
 
     largest = max(contours, key=cv2.contourArea)
+
     clean_mask = np.zeros_like(mask)
     cv2.drawContours(clean_mask, [largest], -1, 255, -1)
 
     leaf_only = cv2.bitwise_and(img_bgr, img_bgr, mask=clean_mask)
+
     return leaf_only, clean_mask
 
-# ================= REAL SEVERITY =================
+
+# ================= SEVERITY =================
 
 def compute_severity_from_pixels(leaf_bgr, leaf_mask):
     hsv = cv2.cvtColor(leaf_bgr, cv2.COLOR_BGR2HSV)
@@ -57,170 +65,243 @@ def compute_severity_from_pixels(leaf_bgr, leaf_mask):
     disease_mask = cv2.inRange(hsv, lower_disease, upper_disease)
     disease_mask = cv2.bitwise_and(disease_mask, disease_mask, mask=leaf_mask)
 
-    infected_pixels = np.count_nonzero(disease_mask)
-    total_leaf_pixels = np.count_nonzero(leaf_mask)
+    infected = np.count_nonzero(disease_mask)
+    total = np.count_nonzero(leaf_mask)
 
-    if total_leaf_pixels == 0:
-        return 0.0, "Unknown", disease_mask
+    if total == 0:
+        return 0, "Unknown", disease_mask
 
-    severity_percent = (infected_pixels / total_leaf_pixels) * 100
+    percent = (infected / total) * 100
 
-    if severity_percent < 5:
+    if percent < 5:
         level = "Very Low"
-    elif severity_percent < 20:
+    elif percent < 20:
         level = "Mild"
-    elif severity_percent < 50:
+    elif percent < 50:
         level = "Moderate"
     else:
         level = "Severe"
 
-    return severity_percent, level, disease_mask
+    return percent, level, disease_mask
+
 
 # ================= HELPERS =================
 
-def resize_with_padding(img, target_size=224):
+def resize_with_padding(img, target=224):
     h, w, _ = img.shape
-    scale = target_size / max(h, w)
-    new_w, new_h = int(w * scale), int(h * scale)
 
-    resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    scale = target / max(h, w)
+    nw, nh = int(w * scale), int(h * scale)
 
-    pad_w, pad_h = target_size - new_w, target_size - new_h
-    top, bottom = pad_h // 2, pad_h - pad_h // 2
-    left, right = pad_w // 2, pad_w - pad_w // 2
+    resized = cv2.resize(img, (nw, nh))
+
+    pad_w, pad_h = target - nw, target - nh
+
+    top = pad_h // 2
+    bottom = pad_h - top
+    left = pad_w // 2
+    right = pad_w - left
 
     return cv2.copyMakeBorder(
         resized, top, bottom, left, right,
         cv2.BORDER_CONSTANT, value=[0, 0, 0]
     )
 
+
 def parse_class_name(class_name):
     if "___" in class_name:
         crop, disease = class_name.split("___", 1)
-    elif "_" in class_name:
-        crop, disease = class_name.split("_", 1)
     else:
         crop, disease = class_name, "Unknown"
-    return crop, disease.replace("_", " ").strip()
+
+    return crop, disease.replace("_", " ")
+
+
+def get_guide_info(best_class):
+    for key in TOMATO_DISEASE_GUIDE:
+        if key.lower() == best_class.lower():
+            return TOMATO_DISEASE_GUIDE[key]
+    return None
+
 
 def weather_risk_advice(disease_name, weather_info):
     advice = []
-    disease = disease_name.lower()
 
     try:
-        temp = float(weather_info.split("Temperature:")[1].split("°")[0].strip())
-        humidity = int(weather_info.split("Humidity:")[1].split("%")[0].strip())
-    except Exception:
-        return []
+        temp = float(weather_info.split("Temperature:")[1].split("°")[0])
+        humidity = int(weather_info.split("Humidity:")[1].split("%")[0])
+    except:
+        return advice
+
+    disease = disease_name.lower()
 
     if any(k in disease for k in FUNGAL_KEYWORDS) and humidity > 70:
-        advice.append("⚠️ High humidity favors fungal spread.")
-    if any(k in disease for k in BACTERIAL_KEYWORDS) and humidity > 65 and temp > 25:
-        advice.append("⚠️ Warm & humid conditions favor bacterial diseases.")
+        advice.append("⚠️ High humidity favors fungal diseases")
+
+    if any(k in disease for k in BACTERIAL_KEYWORDS) and humidity > 65:
+        advice.append("⚠️ Warm humid weather favors bacterial diseases")
+
     if any(k in disease for k in VIRAL_KEYWORDS) and temp > 25:
-        advice.append("⚠️ Warm weather increases viral disease vectors.")
+        advice.append("⚠️ Warm weather boosts viral vectors")
 
     return advice
+
 
 # ================= UI =================
 
 st.title("🌿 Agro-Scan – AI Plant Disease Detector")
-st.write("Upload a plant leaf image to detect disease and true severity.")
+st.write("Upload a leaf image to detect disease & real severity.")
 
-uploaded_file = st.file_uploader("📷 Upload a leaf image", type=["jpg", "jpeg", "png"])
-city = st.text_input("🌦️ Enter your city (optional – weather insights)")
+uploaded_file = st.file_uploader("📷 Upload leaf image", type=["jpg","jpeg","png"])
+city = st.text_input("🌦️ Enter city (optional)")
 
-if uploaded_file is not None:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+
+if uploaded_file:
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(uploaded_file.read())
-        image_path = tmp.name
+        path = tmp.name
 
-    img_bgr = cv2.imread(image_path)
-    if img_bgr is None:
-        st.error("❌ Failed to read image.")
-        st.stop()
+    img_bgr = cv2.imread(path)
 
     leaf_bgr, leaf_mask = extract_leaf_mask(img_bgr)
     leaf_rgb = cv2.cvtColor(leaf_bgr, cv2.COLOR_BGR2RGB)
 
-    st.image(leaf_rgb, caption="Detected Leaf Region", use_container_width=True)
+    st.image(leaf_rgb, caption="Leaf Region")
 
-    img_resized = resize_with_padding(leaf_rgb)
-    img_input = np.expand_dims(img_resized / 255.0, axis=0)
+    resized = resize_with_padding(leaf_rgb)
+    inp = np.expand_dims(resized/255.0, 0)
 
-    with st.spinner("🔍 Analyzing image..."):
-        results = predict_disease(img_input, top_k=3)
+    with st.spinner("Analyzing..."):
+        results = predict_disease(inp, top_k=3)
 
-    st.subheader("🔍 Top Predictions")
-    for i, (cls, conf) in enumerate(results, start=1):
-        crop, disease = parse_class_name(cls)
-        st.write(f"**{i}. 🌱 {crop} – 🦠 {disease}** ({conf*100:.2f}%)")
+    st.subheader("🔍 Predictions")
 
-    best_class, best_confidence = results[0]
-    crop, disease = parse_class_name(best_class)
+    for i,(cls,conf) in enumerate(results,1):
+        crop,disease = parse_class_name(cls)
+        st.write(f"{i}. {crop} - {disease} ({conf*100:.2f}%)")
 
-    severity_percent, severity_level, disease_mask = compute_severity_from_pixels(
+    best_class,best_conf = results[0]
+    crop,disease = parse_class_name(best_class)
+
+    sev_percent, sev_level, dmask = compute_severity_from_pixels(
         leaf_bgr, leaf_mask
     )
 
-    st.subheader("📊 Disease Severity (real area based)")
-    st.write(f"**Severity:** {severity_level}")
-    st.write(f"Infected leaf area: **{severity_percent:.2f}%**")
+    st.subheader("📊 Severity")
+    st.write(f"Level: **{sev_level}**")
+    st.write(f"Infected: **{sev_percent:.2f}%**")
 
-    # 🔥 NEW: severity → action
-    st.subheader("🧭 Recommended Action")
+    overlay = leaf_rgb.copy()
+    overlay[dmask>0] = [255,0,0]
+    blended = cv2.addWeighted(leaf_rgb,0.7,overlay,0.3,0)
 
-    if severity_level == "Very Low":
-        st.success("Monitor the plant. Remove a few infected leaves. No spray needed yet.")
-
-    elif severity_level == "Mild":
-        st.info("Remove infected leaves and do a preventive spray.")
-        st.write("Repeat preventive spray after **7 days** if symptoms remain.")
-
-    elif severity_level == "Moderate":
-        st.warning("Spray recommended pesticide/fungicide now.")
-        st.write("Repeat the spray after **7 days**.")
-
-    else:  # Severe
-        st.error("Immediate chemical control required.")
-        st.write("Remove heavily infected parts and spray now.")
-        st.write("Repeat the spray after **5 days** until severity reduces.")
-
-    red_overlay = leaf_rgb.copy()
-    red_overlay[disease_mask > 0] = [255, 0, 0]
-    blended = cv2.addWeighted(leaf_rgb, 0.7, red_overlay, 0.3, 0)
-    st.image(blended, caption="Detected Diseased Regions", use_container_width=True)
+    st.image(blended, caption="Diseased Area")
 
     if city:
-        weather_info = get_weather(city)
-        st.subheader("🌦️ Local Weather")
-        st.write(weather_info)
+        weather = get_weather(city)
+        st.subheader("🌦️ Weather")
+        st.write(weather)
 
-        for r in weather_risk_advice(disease, weather_info):
-            st.warning(r)
+        for a in weather_risk_advice(disease, weather):
+            st.warning(a)
 
-    st.subheader("📘 Detailed Farmer Guide")
-    info = TOMATO_DISEASE_GUIDE.get(best_class)
+    # ===== FULL FARMER GUIDE =====
+
+    st.subheader("📘 Farmer Guide")
+
+    info = get_guide_info(best_class)
 
     if info:
-        st.markdown("### 🔍 Symptoms")
-        for s in info["symptoms"]:
-            st.write(f"- {s}")
 
-        st.markdown("### 🧪 Cause")
-        st.write(info["cause"])
+        with st.expander("View Details", expanded=True):
 
-        st.markdown("### 🚫 Prevention")
-        for p in info["prevention"]:
-            st.write(f"- {p}")
+            if "symptoms" in info:
+                st.markdown("### 🩺 Symptoms")
+                for s in info["symptoms"]:
+                    st.write(f"- {s}")
 
-        st.markdown("### 💉 Chemical Treatment")
-        for chem in info["treatment_chemicals"]:
-            st.markdown(f"- [{chem['name']}]({chem['link']})")
-    else:
-        st.write(DISEASE_INFO.get(best_class, "ℹ️ No detailed data available."))
+            if "cause" in info:
+                st.markdown("### 🔬 Cause")
+                st.write(info["cause"])
 
-    os.remove(image_path)
+            if "favourable_conditions" in info:
+                st.markdown("### 🌦️ Conditions")
+                st.write(info["favourable_conditions"])
+
+            if "spread" in info:
+                st.markdown("### 🌱 Spread")
+                st.write(info["spread"])
+
+            if "prevention" in info:
+                st.markdown("### 🛡️ Prevention")
+                for p in info["prevention"]:
+                    st.write(f"- {p}")
+
+            if "treatment_chemicals" in info:
+                st.markdown("### 💊 Chemicals")
+                for c in info["treatment_chemicals"]:
+                    st.markdown(f"- [{c['name']}]({c['link']})")
+
+            if "organic_options" in info:
+                st.markdown("### 🌿 Organic")
+                for o in info["organic_options"]:
+                    st.write(f"- {o}")
+
+            if "fertilizer_support" in info:
+                st.markdown("### 🌾 Fertilizer")
+                for f in info["fertilizer_support"]:
+                    st.write(f"- {f}")
+
+    os.remove(path)
 
 else:
-    st.info("⬆️ Upload an image to begin.")
+    st.info("Upload an image to begin.")
+
+
+# ================= FERTILIZER =================
+
+st.markdown("---")
+if st.toggle("🌾 Fertilizer Calculator"):
+
+    st.header("Fertilizer")
+
+    crop = st.text_input("Crop")
+    N = st.number_input("Soil N",0.0, value=50.0)
+    P = st.number_input("Soil P",0.0, value=30.0)
+    K = st.number_input("Soil K",0.0, value=40.0)
+    ph = st.number_input("Soil pH",0.0,14.0,6.5)
+
+    area = st.number_input("Area (ha)",0.01,1.0)
+    fert = st.selectbox("Fertilizer",["Urea","DAP","MOP","NPK_20_20_20"])
+    rain = st.number_input("Rainfall",0.0,100.0)
+
+    if st.button("Calculate"):
+
+        text,_ = recommend_fertilizer(crop,N,P,K,ph)
+        st.write(text)
+
+        amt = calculate_fertilizer_amount(
+            crop,N,P,K,area,fert,rain
+        )
+
+        st.success(f"Apply {amt} kg")
+
+
+# ================= PESTICIDE =================
+
+st.markdown("---")
+if st.toggle("🛡️ Pesticide Recommendation"):
+
+    st.header("Pesticides")
+
+    crop = st.text_input("Crop name")
+
+    if st.button("Get Pesticides"):
+        _,pests = recommend_fertilizer(crop,0,0,0,7)
+
+        if pests:
+            for p in pests:
+                st.write(f"- {p}")
+        else:
+            st.warning("No data found")
