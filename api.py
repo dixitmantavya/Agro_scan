@@ -33,7 +33,7 @@ app.add_middleware(
 API_KEY = "agroscan123"
 
 # OpenWeatherMap API key
-WEATHER_API_KEY = "your_openweathermap_api_key"
+WEATHER_API_KEY = "ca0b98a1cd522a876b3cac4213af38ce"
 
 
 # ---------- HELPERS ----------
