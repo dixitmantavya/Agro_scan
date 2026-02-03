@@ -59,21 +59,30 @@ def parse_class_name(class_name: str):
 
 
 def compute_severity(img_bgr):
-    """Compute disease severity from image"""
-    hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-    lower_disease = np.array([5, 50, 50])
-    upper_disease = np.array([35, 255, 255])
+    """Compute disease severity more accurately"""
 
-    mask = cv2.inRange(hsv, lower_disease, upper_disease)
+    hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+
+    # Detect yellow/brown lesion colors
+    lower = np.array([10, 60, 60])
+    upper = np.array([40, 255, 255])
+
+    mask = cv2.inRange(hsv, lower, upper)
+
+    # Remove noise
+    kernel = np.ones((5,5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
     infected = np.count_nonzero(mask)
     total = mask.size
+
     pct = (infected / total) * 100 if total else 0
 
-    if pct < 5:
+    if pct < 3:
         level = "Very Low"
-    elif pct < 20:
+    elif pct < 10:
         level = "Mild"
-    elif pct < 50:
+    elif pct < 25:
         level = "Moderate"
     else:
         level = "Severe"
