@@ -165,7 +165,6 @@ async def predict(
                 img_input,
                 model,
                 "Conv_1_bn",
-                pred_index=pred_index
             )           
 
             overlay = overlay_heatmap(
