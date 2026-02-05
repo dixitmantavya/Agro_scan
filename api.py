@@ -164,7 +164,7 @@ async def predict(
             heatmap = make_gradcam_heatmap(
                 img_input,
                 model,
-                "out_relu",
+                "Conv_1_bn",
                 pred_index=pred_index
             )           
 
