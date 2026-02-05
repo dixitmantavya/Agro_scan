@@ -159,7 +159,15 @@ async def predict(
 
         # GradCAM
         try:
-            heatmap = make_gradcam_heatmap(img_input, model, "out_relu")
+            pred_index = np.argmax(model.predict(img_input)[0])
+
+            heatmap = make_gradcam_heatmap(
+                img_input,
+                model,
+                "out_relu",
+                pred_index=pred_index
+            )           
+
             overlay = overlay_heatmap(
                 resized,
                 heatmap

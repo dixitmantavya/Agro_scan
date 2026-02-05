@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
-def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
+def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
     """
     img_array: (1, 224, 224, 3) preprocessed image
     model: trained keras model
@@ -19,8 +19,11 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
 
     with tf.GradientTape() as tape:
         conv_outputs, predictions = grad_model(img_array)
-        class_idx = tf.argmax(predictions[0])
-        loss = predictions[:, class_idx]
+        if pred_index is None:
+            pred_index = tf.argmax(predictions[0])
+
+        loss = predictions[:, pred_index]
+
 
     # Compute gradients
     grads = tape.gradient(loss, conv_outputs)
