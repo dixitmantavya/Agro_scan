@@ -140,25 +140,31 @@ async def predict(
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         img_np = np.array(image)
-        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-        resized = cv2.resize(img_bgr, (224, 224))
+        # MODEL MUST GET RGB
+        resized = cv2.resize(img_np, (224, 224))
         img_input = np.expand_dims(resized / 255.0, axis=0)
+
+        # ONLY for severity
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        resized_bgr = cv2.resize(img_bgr, (224, 224))
 
         results = predict_disease(img_input, top_k=3)
         best_class, best_conf = results[0]
 
         crop, disease = parse_class_name(best_class)
 
-        severity_percent, severity_level = compute_severity(resized)
+        severity_percent, severity_level = compute_severity(resized_bgr)
+
 
         # GradCAM
         try:
             heatmap = make_gradcam_heatmap(img_input, model, "Conv_1")
             overlay = overlay_heatmap(
-                cv2.cvtColor(resized, cv2.COLOR_BGR2RGB),
+                resized,
                 heatmap
             )
+
             _, buffer = cv2.imencode(".png", overlay)
             gradcam_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
         except Exception as e:
