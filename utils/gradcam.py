@@ -34,9 +34,18 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
     heatmap = tf.squeeze(heatmap)
 
     # Normalize
-    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+    # Normalize safely
+    heatmap = tf.maximum(heatmap, 0)
+
+    max_val = tf.math.reduce_max(heatmap)
+
+    if max_val == 0:
+         return heatmap.numpy()
+
+    heatmap = heatmap / max_val
 
     return heatmap.numpy()
+
 
 
 def overlay_heatmap(original_img, heatmap, alpha=0.4):

@@ -159,7 +159,7 @@ async def predict(
 
         # GradCAM
         try:
-            heatmap = make_gradcam_heatmap(img_input, model, "Conv_1")
+            heatmap = make_gradcam_heatmap(img_input, model, "out_relu")
             overlay = overlay_heatmap(
                 resized,
                 heatmap
