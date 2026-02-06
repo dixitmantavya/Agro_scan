@@ -14,7 +14,6 @@ sys.path.append('.')
 from model.predict import predict_disease, model
 from utils.disease_info import DISEASE_INFO
 from utils.tomato_disease_guide import TOMATO_DISEASE_GUIDE
-from utils.gradcam import make_gradcam_heatmap, overlay_heatmap
 
 app = FastAPI(title="AgroScan API")
 
@@ -24,20 +23,13 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 API_KEY = "agroscan123"
 WEATHER_API_KEY = "ca0b98a1cd522a876b3cac4213af38ce"
 
+
 # ---------- HELPERS ----------
-
-def check_api_key(x_api_key: str | None):
-    if x_api_key is None:
-        return
-    if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-
 
 def parse_class_name(class_name: str):
     if "___" in class_name:
@@ -47,10 +39,11 @@ def parse_class_name(class_name: str):
         crop, disease = parts[0], parts[1] if len(parts) > 1 else "Unknown"
     else:
         crop, disease = class_name, "Unknown"
+
     return crop, disease.replace("_", " ")
 
 
-# ✅ TRANSLUCENT SEVERITY FUNCTION
+# ✅ BETTER TRANSLUCENT MASK + ACCURATE %
 def compute_severity_and_mask(img_bgr):
 
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
@@ -64,12 +57,16 @@ def compute_severity_and_mask(img_bgr):
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-    mask = cv2.GaussianBlur(mask,(5,5),0)
+    # Smooth mask
+    mask = cv2.GaussianBlur(mask,(7,7),0)
 
-    infected = np.count_nonzero(mask)
-    total = mask.size
+    # ✅ ACCURATE % (count only lesion pixels)
+    infected = np.count_nonzero(mask > 20)
+    total = mask.shape[0] * mask.shape[1]
+
     percent = (infected / total) * 100 if total else 0
 
+    # Severity levels
     if percent < 3:
         level = "Very Low"
     elif percent < 10:
@@ -79,11 +76,11 @@ def compute_severity_and_mask(img_bgr):
     else:
         level = "Severe"
 
-    # -------- TRANSLUCENT HEATMAP --------
+    # -------- TRUE TRANSLUCENT HEATMAP --------
     heatmap = np.zeros_like(img_bgr)
-    heatmap[mask > 0] = [0, 0, 255]  # red
+    heatmap[:,:,2] = mask  # red channel intensity
 
-    overlay = cv2.addWeighted(img_bgr, 0.75, heatmap, 0.25, 0)
+    overlay = cv2.addWeighted(img_bgr, 0.85, heatmap, 0.35, 0)
 
     return round(percent,2), level, overlay
 
@@ -100,7 +97,6 @@ def get_weather_info(city: str):
                 "temperature": d['main']['temp'],
                 "humidity": d['main']['humidity'],
                 "condition": d['weather'][0]['main'],
-                "description": "ok"
             }
     except:
         pass
@@ -109,24 +105,23 @@ def get_weather_info(city: str):
         "temperature": 28,
         "humidity": 75,
         "condition": "Partly Cloudy",
-        "description": "fallback"
     }
 
 
 # ---------- MAIN PREDICT ----------
 @app.post("/predict")
-async def predict(file: UploadFile = File(...), x_api_key: str | None = Header(default=None)):
+async def predict(file: UploadFile = File(...)):
 
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
 
     img_np = np.array(image)
 
-    # MODEL INPUT (RGB)
+    # MODEL INPUT
     resized = cv2.resize(img_np,(224,224))
     img_input = np.expand_dims(resized/255.0,axis=0)
 
-    # SEVERITY INPUT (BGR)
+    # SEVERITY INPUT
     img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
     resized_bgr = cv2.resize(img_bgr,(224,224))
 
@@ -140,7 +135,7 @@ async def predict(file: UploadFile = File(...), x_api_key: str | None = Header(d
     severity_percent, severity_level, lesion_overlay = compute_severity_and_mask(resized_bgr)
 
     _, buffer = cv2.imencode(".png", lesion_overlay)
-    gradcam_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
+    gradcam_base64 = base64.b64encode(buffer).decode("utf-8")
 
     guide = TOMATO_DISEASE_GUIDE.get(best_class, {})
 
@@ -162,7 +157,6 @@ async def predict(file: UploadFile = File(...), x_api_key: str | None = Header(d
         "pesticide_advice": DISEASE_INFO.get(best_class,""),
         "detailed_guide": guide,
 
-        # ✅ TRANSLUCENT LESION OVERLAY
         "gradcam_image_base64": gradcam_base64,
 
         "top_predictions":[
