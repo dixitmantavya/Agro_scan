@@ -50,7 +50,7 @@ def parse_class_name(class_name: str):
     return crop, disease.replace("_", " ")
 
 
-# ✅ FIXED SEVERITY FUNCTION
+# ✅ TRANSLUCENT SEVERITY FUNCTION
 def compute_severity_and_mask(img_bgr):
 
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
@@ -64,12 +64,10 @@ def compute_severity_and_mask(img_bgr):
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-    # smoother mask
     mask = cv2.GaussianBlur(mask,(5,5),0)
 
     infected = np.count_nonzero(mask)
     total = mask.size
-
     percent = (infected / total) * 100 if total else 0
 
     if percent < 3:
@@ -81,8 +79,11 @@ def compute_severity_and_mask(img_bgr):
     else:
         level = "Severe"
 
-    overlay = img_bgr.copy()
-    overlay[mask > 0] = [0, 0, 255]
+    # -------- TRANSLUCENT HEATMAP --------
+    heatmap = np.zeros_like(img_bgr)
+    heatmap[mask > 0] = [0, 0, 255]  # red
+
+    overlay = cv2.addWeighted(img_bgr, 0.75, heatmap, 0.25, 0)
 
     return round(percent,2), level, overlay
 
@@ -161,7 +162,7 @@ async def predict(file: UploadFile = File(...), x_api_key: str | None = Header(d
         "pesticide_advice": DISEASE_INFO.get(best_class,""),
         "detailed_guide": guide,
 
-        # ✅ SEND RED LESION OVERLAY
+        # ✅ TRANSLUCENT LESION OVERLAY
         "gradcam_image_base64": gradcam_base64,
 
         "top_predictions":[
