@@ -16,8 +16,10 @@ TOMATO_DISEASE_GUIDE = {
             "Use mulch and proper spacing"
         ],
         "treatment_chemicals": [
-            {"name": "Mancozeb 75% WP", "link": "https://example.com/mancozeb"},
-            {"name": "Chlorothalonil 75% WP", "link": "https://example.com/chlorothalonil"}
+            {"name": "Mancozeb 75% WP",
+             "link": "https://agribegri.com/products/buy-indofil-m-45-mancozeb-75-wp-broad-spectrum-fungicides--online-agro-store.php"},
+            {"name": "Chlorothalonil 75% WP",
+             "link": "https://agricarecorp.com/products/kavach"}
         ],
         "organic_options": ["Neem oil spray", "Trichoderma bio-fungicide"],
         "fertilizer_support": ["Balanced NPK (19:19:19)", "Add compost"]
@@ -38,8 +40,10 @@ TOMATO_DISEASE_GUIDE = {
             "Remove infected plants"
         ],
         "treatment_chemicals": [
-            {"name": "Metalaxyl + Mancozeb", "link": "https://example.com/metalaxyl-mancozeb"},
-            {"name": "Cymoxanil Fungicide", "link": "https://example.com/cymoxanil"}
+            {"name": "Metalaxyl + Mancozeb",
+             "link": "https://agribegri.com/products/buy-hpm-hitalaxyl-metalaxyl-8-wp--mancozeb-64-wp-fungicide-online.php"},
+            {"name": "Cymoxanil Fungicide",
+             "link": "https://www.toolsvilla.com/utkarsh-leafspotnil"}
         ],
         "organic_options": ["Copper fungicide", "Bordeaux mixture"],
         "fertilizer_support": ["Potassium rich feed (13:0:45)"]
@@ -60,8 +64,10 @@ TOMATO_DISEASE_GUIDE = {
             "Crop rotation"
         ],
         "treatment_chemicals": [
-            {"name": "Copper Oxychloride 50% WP", "link": "https://example.com/copper-oxychloride"},
-            {"name": "Copper Hydroxide 77% WP", "link": "https://example.com/copper-hydroxide"}
+            {"name": "Copper Oxychloride 50% WP",
+             "link": "https://www.bighaat.com/products/blitox-fungicide"},
+            {"name": "Copper Hydroxide 77% WP",
+             "link": "https://www.manaagrimart.com/products/hicopper/2830499000000407161"}
         ],
         "organic_options": ["Neem oil", "Bio-copper sprays"],
         "fertilizer_support": ["Balanced NPK", "Micronutrient spray"]
@@ -77,8 +83,10 @@ TOMATO_DISEASE_GUIDE = {
         "spread": "Airborne spores.",
         "prevention": ["Improve ventilation", "Reduce humidity"],
         "treatment_chemicals": [
-            {"name": "Azoxystrobin 23% SC", "link": "https://example.com/azoxystrobin"},
-            {"name": "Chlorothalonil 75% WP", "link": "https://example.com/chlorothalonil"}
+            {"name": "Azoxystrobin 23% SC",
+             "link": "https://katyayanikrishidirect.com/products/azoxystrobin-23-sc-azoxy-fungicide"},
+            {"name": "Chlorothalonil 75% WP",
+             "link": "https://www.bighaat.com/products/kavach-fungicide"}
         ],
         "organic_options": ["Sulfur spray"],
         "fertilizer_support": ["Balanced nutrition"]
@@ -94,8 +102,10 @@ TOMATO_DISEASE_GUIDE = {
         "spread": "Rain splash.",
         "prevention": ["Remove infected leaves", "Use mulch"],
         "treatment_chemicals": [
-            {"name": "Mancozeb 75% WP", "link": "https://example.com/mancozeb"},
-            {"name": "Chlorothalonil 75% WP", "link": "https://example.com/chlorothalonil"}
+            {"name": "Mancozeb 75% WP",
+             "link": "https://agribegri.com/products/buy-indofil-m-45-mancozeb-75-wp-broad-spectrum-fungicides--online-agro-store.php"},
+            {"name": "Chlorothalonil 75% WP",
+             "link": "https://agricarecorp.com/products/kavach"}
         ],
         "organic_options": ["Copper spray"],
         "fertilizer_support": ["Organic compost"]
@@ -111,8 +121,10 @@ TOMATO_DISEASE_GUIDE = {
         "spread": "Wind and infested plants.",
         "prevention": ["Spray water on leaves", "Encourage beneficial insects"],
         "treatment_chemicals": [
-            {"name": "Abamectin 1.9% EC", "link": "https://example.com/abamectin"},
-            {"name": "Spiromesifen 22.9% SC", "link": "https://example.com/spiromesifen"}
+            {"name": "Abamectin 1.9% EC",
+             "link": "https://www.bighaat.com/products/abamectin-1-9-ec"},
+            {"name": "Spiromesifen 22.9% SC",
+             "link": "https://www.kisanshop.in/product/bayer-oberon-spiromesifen-229-sc-insecticide"}
         ],
         "organic_options": ["Neem oil", "Insecticidal soap"],
         "fertilizer_support": ["Maintain proper watering"]
@@ -128,8 +140,10 @@ TOMATO_DISEASE_GUIDE = {
         "spread": "Wind and rain splash.",
         "prevention": ["Remove infected debris", "Good airflow"],
         "treatment_chemicals": [
-            {"name": "Azoxystrobin 23% SC", "link": "https://example.com/azoxystrobin"},
-            {"name": "Chlorothalonil 75% WP", "link": "https://example.com/chlorothalonil"}
+            {"name": "Azoxystrobin 23% SC",
+             "link": "https://katyayanikrishidirect.com/products/azoxystrobin-23-sc-azoxy-fungicide"},
+            {"name": "Chlorothalonil 75% WP",
+             "link": "https://agricarecorp.com/products/kavach"}
         ],
         "organic_options": ["Copper fungicide"],
         "fertilizer_support": ["Balanced NPK"]
@@ -145,8 +159,10 @@ TOMATO_DISEASE_GUIDE = {
         "spread": "Whitefly insects.",
         "prevention": ["Control whiteflies", "Remove infected plants"],
         "treatment_chemicals": [
-            {"name": "Imidacloprid 17.8% SL", "link": "https://example.com/imidacloprid"},
-            {"name": "Thiamethoxam 25% WG", "link": "https://example.com/thiamethoxam"}
+            {"name": "Imidacloprid 17.8% SL",
+             "link": "https://www.bighaat.com/products/media-insecticides"},
+            {"name": "Thiamethoxam 25% WG",
+             "link": "https://www.bighaat.com/products/areva-insecticide"}
         ],
         "organic_options": ["Neem oil", "Sticky traps"],
         "fertilizer_support": ["Micronutrient sprays"]
@@ -162,7 +178,8 @@ TOMATO_DISEASE_GUIDE = {
         "spread": "Mechanical transmission.",
         "prevention": ["Disinfect tools", "Remove infected plants"],
         "treatment_chemicals": [
-            {"name": "No chemical cure available", "link": "https://example.com/no-cure"}
+            {"name": "No chemical cure available",
+             "link": "https://example.com/no-cure"}
         ],
         "organic_options": ["Strict sanitation"],
         "fertilizer_support": ["Balanced nutrition"]
@@ -173,7 +190,8 @@ TOMATO_DISEASE_GUIDE = {
         "cause": "Plant is healthy.",
         "prevention": ["Regular monitoring", "Proper watering"],
         "treatment_chemicals": [
-            {"name": "Not required", "link": "https://example.com/healthy-care"}
+            {"name": "Not required",
+             "link": "https://example.com/healthy-care"}
         ],
         "organic_options": ["Maintain healthy soil"],
         "fertilizer_support": ["19:19:19 foliar spray"]
