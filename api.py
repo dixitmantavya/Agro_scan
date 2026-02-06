@@ -157,26 +157,27 @@ async def predict(
         severity_percent, severity_level = compute_severity(resized_bgr)
 
 
-        # GradCAM
-        try:
-            pred_index = np.argmax(model.predict(img_input)[0])
+        # -------- SEVERITY MASK OVERLAY --------
 
-            heatmap = make_gradcam_heatmap(
-                img_input,
-                model,
-                "block_16_depthwise"
-            )           
+        hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 
-            overlay = overlay_heatmap(
-                resized,
-                heatmap
-            )
+        lower = np.array([10, 60, 60])
+        upper = np.array([40, 255, 255])
 
-            _, buffer = cv2.imencode(".png", overlay)
-            gradcam_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
-        except Exception as e:
-            print("GradCAM failed:", e)
-            gradcam_base64 = ""
+        mask = cv2.inRange(hsv, lower, upper)
+
+        # clean noise
+        kernel = np.ones((5,5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+        # make red overlay
+        overlay = resized.copy()
+        overlay[mask > 0] = [0, 0, 255]  # RED lesions
+
+        _, buffer = cv2.imencode(".png", overlay)
+        gradcam_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
+
+
 
         # ✅ ALWAYS GET GUIDE SAFELY
         guide = TOMATO_DISEASE_GUIDE.get(best_class, {})
